@@ -115,6 +115,27 @@ const ConsolidatedIPOView = () => {
     return dateString.split(' ').slice(0, 2).join(' ');
   };
 
+  // Helper function to extract only the Cr amount from issue size
+  const formatIssueSize = (issueSize: string) => {
+    if (!issueSize || issueSize === 'TBD') return issueSize;
+    
+    // Extract ₹XX.XX Cr pattern from strings like "1,80,96,000 shares (aggregating up to ₹360.11 Cr)"
+    const crPattern = /₹([\d,]+(?:\.\d+)?)\s*Cr/i;
+    const match = issueSize.match(crPattern);
+    
+    if (match) {
+      return `₹${match[1]} Cr`;
+    }
+    
+    // If it's already in the right format (₹XX Cr), return as is
+    if (issueSize.includes('₹') && issueSize.includes('Cr')) {
+      return issueSize;
+    }
+    
+    // Otherwise return the original
+    return issueSize;
+  };
+
   if (loading) return <div className="loading">Loading live IPOs...</div>;
   if (error) return <div className="error">{error}</div>;
   if (!ipos.length) {
@@ -180,7 +201,7 @@ const ConsolidatedIPOView = () => {
                     {ipo.exchangePlatform === 'SME' ? 'SME' : 'Main'}
                   </span>
                 </td>
-                <td className="compact-amount">{ipo.issueSize}</td>
+                <td className="compact-amount">{formatIssueSize(ipo.issueSize)}</td>
                 <td className="compact-amount">{ipo.priceRange}</td>
                 <td className="date-cell">{formatCompactDate(ipo.openDate)}</td>
                 <td className="date-cell">{formatCompactDate(ipo.closeDate)}</td>
