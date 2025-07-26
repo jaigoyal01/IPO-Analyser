@@ -1,0 +1,165 @@
+.consolidated-ipo-view {
+  padding: 20px;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.consolidated-ipo-view h1 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 30px;
+  font-size: 2rem;
+}
+
+.loading, .error, .no-data {
+  text-align: center;
+  padding: 40px;
+  font-size: 1.2rem;
+}
+
+.error {
+  color: #d32f2f;
+  background-color: #ffebee;
+  border: 1px solid #ffcdd2;
+  border-radius: 4px;
+}
+
+.loading {
+  color: #1976d2;
+}
+
+.no-data {
+  color: #666;
+}
+
+.table-container {
+  overflow-x: auto;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  background: white;
+}
+
+.ipo-table {
+  width: 100%;
+  min-width: 1400px;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.ipo-table th {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+  padding: 12px 8px;
+  text-align: center;
+  border: 1px solid #5a6fd8;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.ipo-table td {
+  padding: 10px 8px;
+  border: 1px solid #e0e0e0;
+  text-align: center;
+  vertical-align: middle;
+  font-size: 12px;
+}
+
+.ipo-table tbody tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.ipo-table tbody tr:hover {
+  background-color: #e3f2fd;
+  transition: background-color 0.2s ease;
+}
+
+.ipo-name {
+  text-align: left !important;
+  min-width: 150px;
+  font-weight: 600;
+}
+
+.ipo-name div {
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.ipo-name small {
+  font-size: 10px;
+}
+
+.ipo-name small a {
+  color: #1976d2;
+  text-decoration: none;
+}
+
+.ipo-name small a:hover {
+  text-decoration: underline;
+}
+
+/* Column specific styling */
+.ipo-table th:nth-child(1),
+.ipo-table td:nth-child(1) {
+  position: sticky;
+  left: 0;
+  background: white;
+  z-index: 2;
+  box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+}
+
+.ipo-table th:nth-child(1) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .consolidated-ipo-view {
+    padding: 10px;
+  }
+  
+  .ipo-table {
+    font-size: 12px;
+  }
+  
+  .ipo-table th,
+  .ipo-table td {
+    padding: 8px 6px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 768px) {
+  .consolidated-ipo-view h1 {
+    font-size: 1.5rem;
+  }
+  
+  .table-container {
+    border-radius: 4px;
+  }
+  
+  .ipo-table {
+    min-width: 1200px;
+  }
+}
+
+/* Print styles */
+@media print {
+  .consolidated-ipo-view {
+    padding: 0;
+  }
+  
+  .table-container {
+    box-shadow: none;
+    border: 1px solid #000;
+  }
+  
+  .ipo-table th {
+    background: #f0f0f0 !important;
+    color: #000 !important;
+  }
+  
+  .ipo-table tbody tr:nth-child(even) {
+    background-color: #f8f8f8 !important;
+  }
+}
