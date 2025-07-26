@@ -56,26 +56,17 @@ const ConsolidatedIPOView = () => {
   useEffect(() => {
     setLoading(true);
     setError(null);
-    console.log('Starting to fetch IPO data from API...');
     
     fetch('http://localhost:5174/api/all-ipos')
       .then(res => {
-        console.log('API response status:', res.status);
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
         }
         return res.json();
       })
       .then(data => {
-        console.log('Fetched combined IPO data:', data);
-        console.log('Mainboard IPOs:', data.mainboard?.length || 0);
-        console.log('SME IPOs:', data.sme?.length || 0);
-        
         // Combine mainboard and SME IPOs
         const allIPOs = [...(data.mainboard || []), ...(data.sme || [])];
-        console.log('Total combined IPOs:', allIPOs.length);
-        console.log('Sample IPO data:', allIPOs[0]);
-        
         setIpos(allIPOs);
       })
       .catch(err => {
@@ -84,7 +75,6 @@ const ConsolidatedIPOView = () => {
       })
       .finally(() => {
         setLoading(false);
-        console.log('API fetch completed');
       });
   }, []);
 
@@ -142,7 +132,6 @@ const ConsolidatedIPOView = () => {
     return (
       <div className="no-data">
         <p>No live IPOs found.</p>
-        <p>Debug: API returned {ipos.length} IPOs</p>
         <button onClick={() => window.location.reload()}>Refresh</button>
       </div>
     );
