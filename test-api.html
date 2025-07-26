@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>API Test</h1>
+    <div id="result">Loading...</div>
+    
+    <script>
+        async function testAPI() {
+            try {
+                console.log('Testing API...');
+                const response = await fetch('http://localhost:5174/api/all-ipos');
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('API data:', data);
+                
+                document.getElementById('result').innerHTML = `
+                    <h2>API Success!</h2>
+                    <p>Mainboard IPOs: ${data.mainboard?.length || 0}</p>
+                    <p>SME IPOs: ${data.sme?.length || 0}</p>
+                    <p>Total: ${data.total}</p>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                console.error('API Error:', error);
+                document.getElementById('result').innerHTML = `
+                    <h2>API Error!</h2>
+                    <p>Error: ${error.message}</p>
+                `;
+            }
+        }
+        
+        testAPI();
+    </script>
+</body>
+</html>

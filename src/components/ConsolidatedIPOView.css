@@ -7,8 +7,26 @@
 .consolidated-ipo-view h1 {
   text-align: center;
   color: #333;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
   font-size: 2rem;
+}
+
+.ipo-summary {
+  text-align: center;
+  margin-bottom: 30px;
+  padding: 15px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+.summary-item {
+  font-weight: 600;
+  font-size: 1.1rem;
+  color: #333;
 }
 
 .loading, .error, .no-data {
@@ -41,28 +59,30 @@
 
 .ipo-table {
   width: 100%;
-  min-width: 1400px;
+  min-width: 1100px;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .ipo-table th {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   font-weight: 600;
-  padding: 12px 8px;
+  padding: 10px 6px;
   text-align: center;
   border: 1px solid #5a6fd8;
   font-size: 12px;
   white-space: nowrap;
+  line-height: 1.2;
 }
 
 .ipo-table td {
-  padding: 10px 8px;
+  padding: 8px 6px;
   border: 1px solid #e0e0e0;
   text-align: center;
   vertical-align: middle;
   font-size: 12px;
+  white-space: nowrap;
 }
 
 .ipo-table tbody tr:nth-child(even) {
@@ -76,17 +96,21 @@
 
 .ipo-name {
   text-align: left !important;
-  min-width: 150px;
+  min-width: 120px;
   font-weight: 600;
+  max-width: 140px;
 }
 
 .ipo-name div {
   color: #333;
-  margin-bottom: 4px;
+  margin-bottom: 3px;
+  font-size: 13px;
+  line-height: 1.3;
+  word-wrap: break-word;
 }
 
 .ipo-name small {
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .ipo-name small a {
@@ -119,13 +143,19 @@
   }
   
   .ipo-table {
-    font-size: 12px;
+    font-size: 10px;
+    min-width: 1000px;
   }
   
   .ipo-table th,
   .ipo-table td {
-    padding: 8px 6px;
-    font-size: 11px;
+    padding: 4px 3px;
+    font-size: 9px;
+  }
+  
+  .ipo-name {
+    min-width: 100px;
+    max-width: 120px;
   }
 }
 
@@ -139,7 +169,19 @@
   }
   
   .ipo-table {
-    min-width: 1200px;
+    min-width: 900px;
+    font-size: 9px;
+  }
+  
+  .ipo-table th,
+  .ipo-table td {
+    padding: 3px 2px;
+    font-size: 8px;
+  }
+  
+  .ipo-name {
+    min-width: 80px;
+    max-width: 100px;
   }
 }
 
@@ -162,4 +204,81 @@
   .ipo-table tbody tr:nth-child(even) {
     background-color: #f8f8f8 !important;
   }
+}
+
+/* Platform badges */
+.platform-badge {
+  text-align: center;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge.mainboard {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+}
+
+.badge.sme {
+  background: linear-gradient(135deg, #FF9800, #F57C00);
+  color: white;
+}
+
+/* Compact data styling */
+.compact-amount {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.compact-shares {
+  font-size: 12px;
+  color: #666;
+}
+
+.allocation-cell {
+  font-size: 12px;
+  font-weight: 500;
+  color: #2e7d32;
+}
+
+.allottee-cell {
+  font-size: 12px;
+  font-weight: 500;
+  color: #d84315;
+}
+
+/* Date formatting */
+.date-cell {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* Platform column optimization */
+.platform-badge {
+  text-align: center;
+  min-width: 60px;
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* Lot size column */
+.lot-cell {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1565c0;
 }
