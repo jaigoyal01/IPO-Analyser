@@ -88,8 +88,22 @@ async function fetchSMEIPOs() {
       // Extract IPO names from the active list - they are comma separated
       const activeText = activeSMEMatch[1];
       // Split by comma and clean up each name
-      const activeNames = activeText.split(',').map(name => name.trim().replace(' IPO', ''));
-      foundActiveIPOs = activeNames.filter(name => name && name.length > 2);
+      const activeNames = activeText.split(',').map(name => {
+        let cleanName = name.trim().replace(' IPO', '');
+        // Remove HTML entities and malformed links
+        cleanName = cleanName.replace(/\\u003ca?\s*href[^>]*>/gi, '');
+        cleanName = cleanName.replace(/[<>]/g, '');
+        cleanName = cleanName.replace(/^\W+|\W+$/g, '');
+        return cleanName;
+      });
+      foundActiveIPOs = activeNames.filter(name => 
+        name && 
+        name.length > 2 && 
+        !name.includes('\\u003c') && 
+        !name.includes('href') &&
+        !name.includes('http') &&
+        !name.match(/^[^a-zA-Z]*$/) // Not just symbols/numbers
+      );
     }
     
     if (upcomingSMEMatch) {
@@ -104,8 +118,22 @@ async function fetchSMEIPOs() {
       console.log('Found closing SME IPOs:', closingTodayMatch[1]);
       // Extract IPO names from the closing list - they are comma separated
       const closingText = closingTodayMatch[1];
-      const closingNames = closingText.split(',').map(name => name.trim().replace(' IPO', ''));
-      foundClosingIPOs = closingNames.filter(name => name && name.length > 2);
+      const closingNames = closingText.split(',').map(name => {
+        let cleanName = name.trim().replace(' IPO', '');
+        // Remove HTML entities and malformed links
+        cleanName = cleanName.replace(/\\u003ca?\s*href[^>]*>/gi, '');
+        cleanName = cleanName.replace(/[<>]/g, '');
+        cleanName = cleanName.replace(/^\W+|\W+$/g, '');
+        return cleanName;
+      });
+      foundClosingIPOs = closingNames.filter(name => 
+        name && 
+        name.length > 2 && 
+        !name.includes('\\u003c') && 
+        !name.includes('href') &&
+        !name.includes('http') &&
+        !name.match(/^[^a-zA-Z]*$/) // Not just symbols/numbers
+      );
     }
     
     // Debug output
@@ -113,6 +141,12 @@ async function fetchSMEIPOs() {
     console.log('- Active IPOs found:', foundActiveIPOs.length, foundActiveIPOs);
     console.log('- Upcoming IPOs found:', foundUpcomingIPOs.length, foundUpcomingIPOs);
     console.log('- Closing IPOs found:', foundClosingIPOs.length, foundClosingIPOs);
+    
+    // Check if any valid active IPOs were found
+    if (foundActiveIPOs.length === 0) {
+      console.log('No valid active SME IPOs found. Returning empty array.');
+      return [];
+    }
     
     // Only process ACTIVE IPOs - filter out closing and upcoming ones
     console.log('Fetching detailed information for live SME IPOs only...');
@@ -124,7 +158,9 @@ async function fetchSMEIPOs() {
         const urlMap = {
           'Sellowrap Industries': 'https://www.chittorgarh.com/ipo/sellowrap-industries-ipo/2040/',
           'Shree Refrigerations': 'https://www.chittorgarh.com/ipo/shree-refrigerations-ipo/2145/',
-          'Patel Chem Specialities': 'https://www.chittorgarh.com/ipo/patel-chem-ipo/2153/'
+          'Patel Chem Specialities': 'https://www.chittorgarh.com/ipo/patel-chem-ipo/2153/',
+          'Repono': 'https://www.chittorgarh.com/ipo/repono-limited-ipo/2232/',
+          'Umiya Mobile': 'https://www.chittorgarh.com/ipo/umiya-mobile-ipo/2273/'
         };
         
         console.log(`=== URL MAPPING DEBUG ===`);
@@ -760,6 +796,7 @@ async function fetchSMEIPOs() {
         exchangePlatform: 'SME',
         securityType: 'SME',
         status: 'Live',
+        url: ipoDetails.actualUrl || `https://www.chittorgarh.com/ipo/${name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '').replace(/--+/g, '-')}-ipo/`,
         link: ipoDetails.actualUrl || `https://www.chittorgarh.com/ipo/${name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '').replace(/--+/g, '-')}-ipo/`,
         details: {
           openDate: ipoDetails.openDate,
@@ -771,6 +808,7 @@ async function fetchSMEIPOs() {
           allotmentDate: ipoDetails.allotmentDate,
           refundDate: ipoDetails.refundDate,
           creditDate: ipoDetails.creditDate,
+          actualUrl: ipoDetails.actualUrl || `https://www.chittorgarh.com/ipo/${name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-]/g, '').replace(/--+/g, '-')}-ipo/`,
           applications: applicationAmounts,
           allocation: {
             niiShares: ipoDetails.niiHniShares ? `${parseInt(ipoDetails.niiHniShares.toString().replace(/,/g, '')).toLocaleString('en-IN')} shares` : null,
