@@ -2,6 +2,85 @@ const puppeteer = require('puppeteer');
 const axios = require('axios');
 const cheerio = require('cheerio');
 
+// Shared browser instance
+let sharedBrowser = null;
+let browserStartTime = null;
+const BROWSER_RESTART_INTERVAL = 30 * 60 * 1000; // 30 minutes
+
+// Function to get or create a shared browser instance
+async function getSharedBrowser() {
+  try {
+    // Check if browser needs restart (after 30 minutes or if closed)
+    const now = Date.now();
+    if (sharedBrowser && browserStartTime && (now - browserStartTime > BROWSER_RESTART_INTERVAL)) {
+      console.log('🔄 Browser instance expired, restarting...');
+      await closeBrowser();
+    }
+
+    // Check if browser is still connected
+    if (sharedBrowser && !sharedBrowser.isConnected()) {
+      console.log('🔄 Browser disconnected, creating new instance...');
+      sharedBrowser = null;
+    }
+
+    // Create new browser if needed
+    if (!sharedBrowser) {
+      console.log('🚀 Starting new shared browser instance...');
+      sharedBrowser = await puppeteer.launch({ 
+        headless: true,
+        args: [
+          '--no-sandbox', 
+          '--disable-setuid-sandbox',
+          '--disable-web-security',
+          '--disable-extensions',
+          '--disable-gpu',
+          '--disable-dev-shm-usage',
+          '--disable-background-networking',
+          '--disable-default-apps',
+          '--disable-sync',
+          '--no-first-run'
+        ]
+      });
+      browserStartTime = now;
+      console.log('✅ Shared browser instance ready');
+    }
+
+    return sharedBrowser;
+  } catch (error) {
+    console.error('❌ Error creating shared browser:', error.message);
+    sharedBrowser = null;
+    throw error;
+  }
+}
+
+// Function to close the shared browser
+async function closeBrowser() {
+  if (sharedBrowser) {
+    try {
+      console.log('🔒 Closing shared browser instance...');
+      await sharedBrowser.close();
+      sharedBrowser = null;
+      browserStartTime = null;
+    } catch (error) {
+      console.error('Error closing browser:', error.message);
+      sharedBrowser = null;
+    }
+  }
+}
+
+// Graceful shutdown handler
+process.on('SIGINT', async () => {
+  console.log('\n🛑 Shutting down gracefully...');
+  await closeBrowser();
+  process.exit(0);
+});
+
+process.on('SIGTERM', async () => {
+  console.log('\n🛑 Shutting down gracefully...');
+  await closeBrowser();
+  process.exit(0);
+});
+
 // Function to extract GMP URL from IPO detail page
 async function getGMPUrl(ipoUrl) {
   try {
@@ -29,30 +108,42 @@ async function getGMPUrl(ipoUrl) {
   }
 }
 
-// Function to extract GMP data using Puppeteer
+// Function to extract GMP data using shared Puppeteer browser
 async function fetchGMPData(gmpUrl) {
-  let browser;
+  let page;
   try {
     if (!gmpUrl) return null;
     
     console.log(`🔍 Extracting GMP from: ${gmpUrl}`);
     
-    browser = await puppeteer.launch({ 
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
+    // Get the shared browser instance
+    const browser = await getSharedBrowser();
     
-    const page = await browser.newPage();
+    // Create a new page for this extraction
+    page = await browser.newPage();
+    
+    // Optimize page for faster loading
     await page.setViewport({ width: 1366, height: 768 });
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
     
-    await page.goto(gmpUrl, { 
-      waitUntil: 'networkidle2',
-      timeout: 30000 
+    // Block unnecessary resources for faster loading
+    await page.setRequestInterception(true);
+    page.on('request', (req) => {
+      const resourceType = req.resourceType();
+      if (resourceType === 'image' || resourceType === 'stylesheet' || resourceType === 'font') {
+        req.abort();
+      } else {
+        req.continue();
+      }
     });
     
-    // Wait for content to load
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await page.goto(gmpUrl, { 
+      waitUntil: 'domcontentloaded', // Faster than networkidle2
+      timeout: 15000 // Reduced timeout
+    });
+    
+    // Reduced wait time since we're blocking resources
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
     // Extract GMP data from the page
     const gmpData = await page.evaluate(() => {
@@ -122,8 +213,13 @@ async function fetchGMPData(gmpUrl) {
       gmpUrl: gmpUrl
     };
   } finally {
-    if (browser) {
-      await browser.close();
+    // Always close the page to free up memory
+    if (page) {
+      try {
+        await page.close();
+      } catch (closeError) {
+        console.error('Error closing page:', closeError.message);
+      }
     }
   }
 }
