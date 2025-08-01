@@ -1,5 +1,6 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
+const { getGMPUrl, fetchGMPData } = require('./gmp-extractor.cjs');
 
 async function fetchIPODetails(ipoUrl) {
   try {
@@ -21,6 +22,9 @@ async function fetchIPODetails(ipoUrl) {
       allotmentDate: null,
       refundDate: null,
       creditDate: null,
+      gmp: 'TBD',
+      gmpStatus: 'TBD',
+      gmpUrl: null,
       applications: {
         retailMin: null,
         retailMax: null,
@@ -262,6 +266,38 @@ async function fetchIPODetails(ipoUrl) {
       hasApplications: !!details.applications.retailMin,
       hasAllocation: !!details.allocation.qibShares
     });
+
+    // Extract GMP data for mainboard IPOs
+    console.log(`Extracting GMP data for mainboard IPO...`);
+    try {
+      const gmpUrl = await getGMPUrl(ipoUrl);
+      if (gmpUrl) {
+        console.log(`Found GMP URL: ${gmpUrl}`);
+        const gmpData = await fetchGMPData(gmpUrl);
+        if (gmpData && gmpData.gmpValue) {
+          // gmpValue contains the complete "Estimated Listing Price" e.g., "₹151 (16.15%)"
+          details.gmp = gmpData.gmpValue;
+          details.gmpStatus = gmpData.gmpStatus || 'TBD';
+          details.gmpUrl = gmpData.gmpUrl;
+          console.log(`✅ GMP data extracted: ${details.gmp} (${details.gmpStatus})`);
+        } else {
+          details.gmp = 'TBD';
+          details.gmpStatus = gmpData?.gmpStatus || 'TBD';
+          details.gmpUrl = gmpUrl;
+          console.log(`❌ Could not extract GMP value, but found URL: ${gmpUrl}`);
+        }
+      } else {
+        details.gmp = 'TBD';
+        details.gmpStatus = 'No URL';
+        details.gmpUrl = null;
+        console.log(`❌ No GMP URL found for mainboard IPO`);
+      }
+    } catch (gmpError) {
+      console.error(`❌ Error extracting GMP data: ${gmpError.message}`);
+      details.gmp = 'TBD';
+      details.gmpStatus = 'Error';
+      details.gmpUrl = null;
+    }
 
     return details;
   } catch (error) {

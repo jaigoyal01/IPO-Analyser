@@ -1,5 +1,6 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
+const { getGMPUrl, fetchGMPData } = require('./gmp-extractor.cjs');
 
 // Helper function to calculate application amounts based on price range and lot size
 function calculateApplicationAmounts(priceRange, lotSize) {
@@ -729,6 +730,38 @@ async function fetchSMEIPOs() {
         
         console.log(`Extracted details for ${companyName}:`, details);
         
+        // Extract GMP data
+        console.log(`Extracting GMP data for ${companyName}...`);
+        try {
+          const gmpUrl = await getGMPUrl(ipoUrl);
+          if (gmpUrl) {
+            console.log(`Found GMP URL: ${gmpUrl}`);
+            const gmpData = await fetchGMPData(gmpUrl);
+            if (gmpData && gmpData.gmpValue) {
+              // gmpValue now contains the complete "Estimated Listing Price" e.g., "₹151 (16.15%)"
+              details.gmp = gmpData.gmpValue;
+              details.gmpStatus = gmpData.gmpStatus || 'TBD';
+              details.gmpUrl = gmpData.gmpUrl;
+              console.log(`✅ GMP data extracted: ${details.gmp} (${details.gmpStatus})`);
+            } else {
+              details.gmp = 'TBD';
+              details.gmpStatus = gmpData?.gmpStatus || 'TBD';
+              details.gmpUrl = gmpUrl;
+              console.log(`❌ Could not extract GMP value, but found URL: ${gmpUrl}`);
+            }
+          } else {
+            details.gmp = 'TBD';
+            details.gmpStatus = 'TBD';
+            details.gmpUrl = null;
+            console.log(`❌ No GMP URL found for ${companyName}`);
+          }
+        } catch (gmpError) {
+          console.log(`❌ Error extracting GMP for ${companyName}:`, gmpError.message);
+          details.gmp = 'TBD';
+          details.gmpStatus = 'TBD';
+          details.gmpUrl = null;
+        }
+        
         // Include the actual URL used for fetching
         details.actualUrl = ipoUrl;
         
@@ -745,7 +778,10 @@ async function fetchSMEIPOs() {
           listingDate: 'TBD',
           allotmentDate: 'TBD',
           refundDate: 'TBD',
-          creditDate: 'TBD'
+          creditDate: 'TBD',
+          gmp: 'TBD',
+          gmpStatus: 'TBD',
+          gmpUrl: null
         };
       }
     }
@@ -824,7 +860,10 @@ async function fetchSMEIPOs() {
             maxRetailAllottees: calculatedMaxRetailAllottees ? calculatedMaxRetailAllottees.toLocaleString('en-IN') : (ipoDetails.maxRetailAllottees || 'TBD'),
             maxBNiiAllottees: calculatedMaxBNiiAllottees ? calculatedMaxBNiiAllottees.toLocaleString('en-IN') : (ipoDetails.maxBNiiAllottees || null),
             maxSNiiAllottees: calculatedMaxSNiiAllottees ? calculatedMaxSNiiAllottees.toLocaleString('en-IN') : (ipoDetails.maxSNiiAllottees || null)
-          }
+          },
+          gmp: ipoDetails.gmp || 'TBD',
+          gmpStatus: ipoDetails.gmpStatus || 'TBD',
+          gmpUrl: ipoDetails.gmpUrl || null
         }
       };
       

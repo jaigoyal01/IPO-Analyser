@@ -32,6 +32,9 @@ interface IPODetails {
   applications: Applications;
   allocation: Allocation;
   actualUrl?: string;
+  gmp?: string;
+  gmpStatus?: string;
+  gmpUrl?: string;
 }
 
 interface LiveIPO {
@@ -150,6 +153,7 @@ const ConsolidatedIPOView = () => {
               <th rowSpan={2}>Open</th>
               <th rowSpan={2}>Close</th>
               <th rowSpan={2}>Lot</th>
+              <th rowSpan={2}>GMP</th>
               <th colSpan={2}>Retail</th>
               <th colSpan={2}>S-HNI</th>
               <th colSpan={2}>B-HNI</th>
@@ -188,6 +192,31 @@ const ConsolidatedIPOView = () => {
                 <td className="date-cell">{formatCompactDate(ipo.openDate)}</td>
                 <td className="date-cell">{formatCompactDate(ipo.closeDate)}</td>
                 <td className="lot-cell">{ipo.details?.lotSize || '-'}</td>
+                <td className="gmp-cell">
+                  {ipo.details?.gmp && ipo.details.gmp !== 'TBD' ? (
+                    <div>
+                      <div>{ipo.details.gmp}</div>
+                      {ipo.details.gmpUrl && (
+                        <small>
+                          <a href={ipo.details.gmpUrl} target="_blank" rel="noopener noreferrer">
+                            View GMP
+                          </a>
+                        </small>
+                      )}
+                    </div>
+                  ) : (
+                    <div>
+                      <div>-</div>
+                      {ipo.details?.gmpUrl && (
+                        <small>
+                          <a href={ipo.details.gmpUrl} target="_blank" rel="noopener noreferrer">
+                            View GMP
+                          </a>
+                        </small>
+                      )}
+                    </div>
+                  )}
+                </td>
                 
                 {/* Retail */}
                 <td className="compact-shares">{ipo.details?.applications?.retailMin?.shares || '-'}</td>
