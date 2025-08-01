@@ -57,7 +57,7 @@ const ConsolidatedIPOView = () => {
     setLoading(true);
     setError(null);
     
-    fetch('http://localhost:5174/api/all-ipos')
+    fetch('http://localhost:5175/api/all-ipos')
       .then(res => {
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);

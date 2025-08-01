@@ -1,0 +1,407 @@
+.fund-optimizer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.optimizer-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.optimizer-header h2 {
+  color: #2c3e50;
+  margin-bottom: 8px;
+  font-size: 28px;
+  font-weight: 600;
+}
+
+.optimizer-header p {
+  color: #7f8c8d;
+  font-size: 16px;
+  margin: 0;
+}
+
+.accounts-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.section-header h3 {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.add-btn {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.add-btn:hover {
+  background: #2980b9;
+}
+
+.accounts-list {
+  margin-bottom: 24px;
+}
+
+.account-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.account-fields {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+}
+
+.account-fields input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.account-fields input:focus {
+  outline: none;
+  border-color: #3498db;
+  box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.account-name {
+  min-width: 200px;
+}
+
+.account-balance,
+.account-required {
+  min-width: 150px;
+}
+
+.remove-btn {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.remove-btn:hover {
+  background: #c0392b;
+}
+
+.optimize-section {
+  text-align: center;
+  padding-top: 20px;
+  border-top: 1px solid #e9ecef;
+}
+
+.optimize-btn {
+  background: #27ae60;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  min-width: 160px;
+}
+
+.optimize-btn:hover:not(:disabled) {
+  background: #229954;
+}
+
+.optimize-btn:disabled {
+  background: #95a5a6;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: #e74c3c;
+  background: #fdf2f2;
+  padding: 12px;
+  border-radius: 6px;
+  margin-top: 12px;
+  text-align: center;
+  border: 1px solid #fecaca;
+}
+
+.results-section {
+  display: grid;
+  gap: 20px;
+}
+
+.summary-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.summary-card h3 {
+  margin: 0 0 16px 0;
+  color: #2c3e50;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.status {
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.status.success {
+  background: #d5f4e6;
+  color: #27ae60;
+  border: 1px solid #a7f3d0;
+}
+
+.status.insufficient_funds {
+  background: #fef2f2;
+  color: #e74c3c;
+  border: 1px solid #fecaca;
+}
+
+.summary-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 4px solid #3498db;
+}
+
+.stat .label {
+  font-weight: 500;
+  color: #666;
+}
+
+.stat .value {
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.account-analysis {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.account-analysis h3 {
+  margin: 0 0 20px 0;
+  color: #2c3e50;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.analysis-table {
+  display: grid;
+  gap: 8px;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  gap: 12px;
+  padding: 12px;
+  background: #f1f3f4;
+  border-radius: 6px;
+  font-weight: 600;
+  color: #444;
+  font-size: 14px;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  gap: 12px;
+  padding: 12px;
+  background: #fff;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  align-items: center;
+  font-size: 14px;
+}
+
+.table-row:nth-child(even) {
+  background: #f8f9fa;
+}
+
+.table-row .account-name {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.shortfall {
+  color: #e74c3c !important;
+  font-weight: 600;
+}
+
+.surplus {
+  color: #27ae60 !important;
+  font-weight: 600;
+}
+
+.balanced {
+  color: #7f8c8d !important;
+}
+
+.transfers-section {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.transfers-section h3 {
+  margin: 0 0 20px 0;
+  color: #2c3e50;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.transfers-list {
+  display: grid;
+  gap: 12px;
+}
+
+.transfer-card {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 16px;
+  border-left: 4px solid #f39c12;
+}
+
+.transfer-header {
+  margin-bottom: 12px;
+}
+
+.transfer-amount {
+  font-size: 18px;
+  font-weight: 700;
+  color: #f39c12;
+}
+
+.transfer-flow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.from {
+  color: #e74c3c;
+}
+
+.arrow {
+  color: #7f8c8d;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.to {
+  color: #27ae60;
+}
+
+.transfer-reason {
+  color: #666;
+  font-size: 14px;
+  font-style: italic;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .fund-optimizer {
+    padding: 12px;
+  }
+  
+  .account-fields {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .account-fields input {
+    min-width: unset;
+  }
+  
+  .table-header,
+  .table-row {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+  
+  .table-header {
+    display: none;
+  }
+  
+  .table-row {
+    display: block;
+    padding: 16px;
+  }
+  
+  .table-row span {
+    display: block;
+    margin-bottom: 4px;
+  }
+  
+  .summary-stats {
+    grid-template-columns: 1fr;
+  }
+  
+  .transfer-flow {
+    flex-direction: column;
+    text-align: center;
+    gap: 4px;
+  }
+}
