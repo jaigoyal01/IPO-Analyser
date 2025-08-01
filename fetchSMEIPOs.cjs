@@ -2,6 +2,46 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const { getGMPUrl, fetchGMPData } = require('./gmp-extractor.cjs');
 
+// SME IPO data cache
+const smeIpoCache = new Map();
+const SME_CACHE_DURATION = 5 * 60 * 60 * 1000; // 5 hours in milliseconds
+
+// Cache management for SME IPOs
+function getCachedSMEData() {
+  const cached = smeIpoCache.get('sme_ipos');
+  if (cached) {
+    const now = Date.now();
+    if (now - cached.timestamp < SME_CACHE_DURATION) {
+      console.log('📋 Using cached SME IPO data');
+      return cached.data;
+    } else {
+      // Cache expired, remove it
+      smeIpoCache.delete('sme_ipos');
+      console.log('⏰ SME IPO cache expired');
+    }
+  }
+  return null;
+}
+
+function setCachedSMEData(data) {
+  smeIpoCache.set('sme_ipos', {
+    data: data,
+    timestamp: Date.now()
+  });
+  console.log(`💾 Cached SME IPO data (${data.length} IPOs)`);
+}
+
+// Periodic cache cleanup for SME IPOs (every 2 minutes)
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, cached] of smeIpoCache.entries()) {
+    if (now - cached.timestamp >= SME_CACHE_DURATION) {
+      smeIpoCache.delete(key);
+      console.log('🧹 Cleared expired SME IPO cache');
+    }
+  }
+}, 60 * 60 * 1000); // Check every hour for 5-hour cache
+
 // Helper function to calculate application amounts based on price range and lot size
 function calculateApplicationAmounts(priceRange, lotSize) {
   const lotSizeNum = parseInt(lotSize) || 1000;
@@ -46,6 +86,12 @@ function calculateApplicationAmounts(priceRange, lotSize) {
 
 async function fetchSMEIPOs() {
   try {
+    // Check cache first
+    const cachedData = getCachedSMEData();
+    if (cachedData) {
+      return cachedData;
+    }
+    
     console.log('Fetching SME IPOs from Chittorgarh.com...');
     
     const headers = {
@@ -874,6 +920,9 @@ async function fetchSMEIPOs() {
     // Remove the fallback sample data logic since we're now fetching real detailed data
     console.log('Found ' + smeIPOs.length + ' live SME IPOs from Chittorgarh.com');
     smeIPOs.forEach(ipo => console.log('- ' + ipo.name + ' (' + ipo.status + ')'));
+    
+    // Cache the result
+    setCachedSMEData(smeIPOs);
     
     return smeIPOs;
     

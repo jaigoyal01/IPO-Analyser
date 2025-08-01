@@ -2,6 +2,46 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const { getGMPUrl, fetchGMPData } = require('./gmp-extractor.cjs');
 
+// Mainboard IPO data cache
+const mainboardIpoCache = new Map();
+const MAINBOARD_CACHE_DURATION = 5 * 60 * 60 * 1000; // 5 hours in milliseconds
+
+// Cache management for Mainboard IPOs
+function getCachedMainboardData() {
+  const cached = mainboardIpoCache.get('mainboard_ipos');
+  if (cached) {
+    const now = Date.now();
+    if (now - cached.timestamp < MAINBOARD_CACHE_DURATION) {
+      console.log('📋 Using cached Mainboard IPO data');
+      return cached.data;
+    } else {
+      // Cache expired, remove it
+      mainboardIpoCache.delete('mainboard_ipos');
+      console.log('⏰ Mainboard IPO cache expired');
+    }
+  }
+  return null;
+}
+
+function setCachedMainboardData(data) {
+  mainboardIpoCache.set('mainboard_ipos', {
+    data: data,
+    timestamp: Date.now()
+  });
+  console.log(`💾 Cached Mainboard IPO data (${data.length} IPOs)`);
+}
+
+// Periodic cache cleanup for Mainboard IPOs (every 2 minutes)
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, cached] of mainboardIpoCache.entries()) {
+    if (now - cached.timestamp >= MAINBOARD_CACHE_DURATION) {
+      mainboardIpoCache.delete(key);
+      console.log('🧹 Cleared expired Mainboard IPO cache');
+    }
+  }
+}, 60 * 60 * 1000); // Check every hour for 5-hour cache
+
 async function fetchIPODetails(ipoUrl) {
   try {
     console.log(`\nFetching details from: ${ipoUrl}`);
@@ -308,6 +348,12 @@ async function fetchIPODetails(ipoUrl) {
 
 async function fetchLiveIPOs() {
   try {
+    // Check cache first
+    const cachedData = getCachedMainboardData();
+    if (cachedData) {
+      return cachedData;
+    }
+    
     console.log('Fetching live IPOs from Chittorgarh...');
     const url = 'https://www.chittorgarh.com/report/ipo-in-india-list-main-board-sme/82/mainboard/';
     const { data } = await axios.get(url);
@@ -405,6 +451,9 @@ async function fetchLiveIPOs() {
     if (activeIPOs.length === 0) {
       console.log('No active mainboard IPOs found - returning empty array');
     }
+    
+    // Cache the result
+    setCachedMainboardData(activeIPOs);
     
     return activeIPOs;
 

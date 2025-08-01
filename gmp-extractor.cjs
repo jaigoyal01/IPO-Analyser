@@ -7,6 +7,10 @@ let sharedBrowser = null;
 let browserStartTime = null;
 const BROWSER_RESTART_INTERVAL = 30 * 60 * 1000; // 30 minutes
 
+// GMP data cache
+const gmpCache = new Map();
+const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
+
 // Function to get or create a shared browser instance
 async function getSharedBrowser() {
   try {
@@ -68,16 +72,66 @@ async function closeBrowser() {
   }
 }
 
+// Cache management functions
+function getCachedGMPData(gmpUrl) {
+  const cached = gmpCache.get(gmpUrl);
+  if (cached) {
+    const now = Date.now();
+    if (now - cached.timestamp < CACHE_DURATION) {
+      console.log(`📋 Using cached GMP data for: ${gmpUrl}`);
+      return cached.data;
+    } else {
+      // Cache expired, remove it
+      gmpCache.delete(gmpUrl);
+      console.log(`⏰ Cache expired for: ${gmpUrl}`);
+    }
+  }
+  return null;
+}
+
+function setCachedGMPData(gmpUrl, data) {
+  gmpCache.set(gmpUrl, {
+    data: data,
+    timestamp: Date.now()
+  });
+  console.log(`💾 Cached GMP data for: ${gmpUrl}`);
+}
+
+function clearExpiredCache() {
+  const now = Date.now();
+  let clearedCount = 0;
+  
+  for (const [url, cached] of gmpCache.entries()) {
+    if (now - cached.timestamp >= CACHE_DURATION) {
+      gmpCache.delete(url);
+      clearedCount++;
+    }
+  }
+  
+  if (clearedCount > 0) {
+    console.log(`🧹 Cleared ${clearedCount} expired cache entries`);
+  }
+}
+
+// Periodic cache cleanup (every 10 minutes)
+setInterval(() => {
+  clearExpiredCache();
+}, 10 * 60 * 1000);
+
 // Graceful shutdown handler
 process.on('SIGINT', async () => {
   console.log('\n🛑 Shutting down gracefully...');
   await closeBrowser();
+  gmpCache.clear();
+  console.log('🧹 Cleared all cache data');
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
   console.log('\n🛑 Shutting down gracefully...');
   await closeBrowser();
+  gmpCache.clear();
+  console.log('🧹 Cleared all cache data');
   process.exit(0);
 });
 
@@ -113,6 +167,12 @@ async function fetchGMPData(gmpUrl) {
   let page;
   try {
     if (!gmpUrl) return null;
+    
+    // Check cache first
+    const cachedData = getCachedGMPData(gmpUrl);
+    if (cachedData) {
+      return cachedData;
+    }
     
     console.log(`🔍 Extracting GMP from: ${gmpUrl}`);
     
@@ -199,19 +259,28 @@ async function fetchGMPData(gmpUrl) {
     });
     
     console.log(`✅ GMP extracted: ${gmpData.gmpValue || 'TBD'}`);
-    return {
+    
+    const result = {
       gmpValue: gmpData.gmpValue,
       gmpStatus: gmpData.gmpStatus,
       gmpUrl: gmpUrl
     };
     
+    // Cache the result
+    setCachedGMPData(gmpUrl, result);
+    
+    return result;
+    
   } catch (error) {
     console.error(`❌ Error extracting GMP from ${gmpUrl}:`, error.message);
-    return {
+    const errorResult = {
       gmpValue: null,
       gmpStatus: 'Error',
       gmpUrl: gmpUrl
     };
+    
+    // Don't cache error results
+    return errorResult;
   } finally {
     // Always close the page to free up memory
     if (page) {
@@ -227,7 +296,7 @@ async function fetchGMPData(gmpUrl) {
 // Test the functions
 async function testGMPExtraction() {
   try {
-    console.log('=== Testing GMP Extraction ===');
+    console.log('=== Testing GMP Extraction with Caching ===');
     
     const testIpoUrl = 'https://www.chittorgarh.com/ipo/cash-ur-drive-marketing-ipo/2136/';
     
@@ -235,44 +304,30 @@ async function testGMPExtraction() {
     const gmpUrl = await getGMPUrl(testIpoUrl);
     console.log(`GMP URL: ${gmpUrl}`);
     
-    // Step 2: Extract GMP data
+    // Step 2: Extract GMP data (first time - will be fetched)
     if (gmpUrl) {
-      const gmpData = await fetchGMPData(gmpUrl);
-      console.log('GMP Data:', gmpData);
+      console.log('\n--- First extraction (should fetch from web) ---');
+      const gmpData1 = await fetchGMPData(gmpUrl);
+      console.log('GMP Data:', gmpData1);
+      
+      // Step 3: Extract same GMP data (second time - should use cache)
+      console.log('\n--- Second extraction (should use cache) ---');
+      const gmpData2 = await fetchGMPData(gmpUrl);
+      console.log('GMP Data:', gmpData2);
+      
+      console.log(`\n📊 Cache status: ${gmpCache.size} items cached`);
     }
+    
+    console.log('\n✅ Test completed successfully!');
     
   } catch (error) {
     console.error('Test error:', error.message);
-  }
-}
-
-// Export functions for use in other modules
-module.exports = { getGMPUrl, fetchGMPData };
-
-// Run test if this file is executed directly
-if (require.main === module) {
-  testGMPExtraction();
-}
-
-// Test the functions
-async function testGMPExtraction() {
-  try {
-    console.log('=== Testing GMP Extraction ===');
-    
-    const testIpoUrl = 'https://www.chittorgarh.com/ipo/sellowrap-industries-ipo/2040/';
-    
-    // Step 1: Get GMP URL
-    const gmpUrl = await getGMPUrl(testIpoUrl);
-    console.log(`GMP URL: ${gmpUrl}`);
-    
-    // Step 2: Extract GMP data
-    if (gmpUrl) {
-      const gmpData = await fetchGMPData(gmpUrl);
-      console.log('GMP Data:', gmpData);
-    }
-    
-  } catch (error) {
-    console.error('Test error:', error.message);
+  } finally {
+    // Clean up for test
+    console.log('\n🧹 Cleaning up test resources...');
+    await closeBrowser();
+    gmpCache.clear();
+    process.exit(0);
   }
 }
 
