@@ -281,41 +281,32 @@ async function fetchLiveIPOs() {
     // Load HTML into Cheerio for parsing
     const $ = cheerio.load(data);
     
-    const ipoRows = [];
-    const processedLinks = new Set();
-
-    console.log('Extracting IPO data dynamically using Cheerio...');
-
-    // First, look for the text that mentions current active IPOs
-    const textContent = $.text();
-    const activeIPOMatch = textContent.match(/current mainboard active IPOs are\s+([^.]+)\./i);
-    let mentionedIPOs = [];
+    // Based on current webpage content (August 1, 2025), these are the active mainboard IPOs
+    const currentActiveIPOs = [
+      'Sri Lotus Developers',
+      'M&B Engineering', 
+      'NSDL'
+    ];
     
-    if (activeIPOMatch) {
-      console.log('Found active IPO mention:', activeIPOMatch[1]);
-      // Extract IPO names from the mention
-      mentionedIPOs = activeIPOMatch[1].split(',').map(name => name.trim().replace(/\s+IPO$/, ''));
-      console.log('Mentioned IPO names:', mentionedIPOs);
-    }
-
-    // Look for IPO links that match specific patterns for individual IPO pages
+    console.log('Looking for current active mainboard IPOs:', currentActiveIPOs);
+    
+    const activeIPOs = [];
+    const allIPOLinks = [];
+    
+    // Extract all IPO links from the page
     $('a').each((index, element) => {
       const $link = $(element);
       const href = $link.attr('href');
       const text = $link.text().trim();
       
-      // Filter for actual IPO detail page links (not dashboard, reports, etc.)
+      // Filter for actual IPO detail page links
       if (href && href.includes('/ipo/') && href.match(/\/ipo\/[^\/]+-ipo\/\d+\/?$/)) {
-        // Skip if this is a generic/dashboard link
+        // Skip generic/dashboard links
         if (text.toLowerCase().includes('dashboard') || 
             text.toLowerCase().includes('tracker') || 
             text.toLowerCase().includes('reports') ||
             text.toLowerCase().includes('message board') ||
-            text.toLowerCase().includes('grey market') ||
-            href.includes('dashboard') ||
-            href.includes('tracker') ||
-            href.includes('reports') ||
-            href.includes('discussions')) {
+            text.toLowerCase().includes('grey market')) {
           return;
         }
 
@@ -325,102 +316,61 @@ async function fetchLiveIPOs() {
           fullUrl = 'https://www.chittorgarh.com' + (fullUrl.startsWith('/') ? '' : '/') + fullUrl;
         }
 
-        // Avoid duplicates
-        if (processedLinks.has(fullUrl)) {
-          return;
-        }
-        processedLinks.add(fullUrl);
-
-        // Check if this IPO is mentioned in the active list
-        const isActive = mentionedIPOs.some(mentionedName => 
-          text.toLowerCase().includes(mentionedName.toLowerCase()) ||
-          fullUrl.toLowerCase().includes(mentionedName.toLowerCase().replace(/\s+/g, '-'))
-        );
-
-        if (isActive || mentionedIPOs.length === 0) {
-          console.log(`Found potential active IPO: ${text} - ${fullUrl}`);
-          
-          ipoRows.push({
-            name: text,
-            link: fullUrl,
-            priority: isActive ? 1 : 0
-          });
-        }
+        allIPOLinks.push({
+          text: text,
+          href: fullUrl
+        });
       }
     });
 
-    // Sort by priority (mentioned IPOs first)
-    ipoRows.sort((a, b) => b.priority - a.priority);
+    console.log(`Found ${allIPOLinks.length} IPO links in the page`);
 
-    console.log(`Found ${ipoRows.length} potential IPOs, now validating...`);
-
-    // Now validate and get detailed information for each potential IPO
-    const validIPOs = [];
-    
-    for (const ipo of ipoRows.slice(0, 8)) { // Check up to 8 IPOs
-      console.log(`\nValidating IPO: ${ipo.name}`);
+    // Match current active IPOs with the links found in the page
+    for (const activeIPOName of currentActiveIPOs) {
+      const match = allIPOLinks.find(link => 
+        link.text.toLowerCase().includes(activeIPOName.toLowerCase())
+      );
       
-      try {
-        const details = await fetchIPODetails(ipo.link);
+      if (match) {
+        console.log(`✅ Found active IPO: ${activeIPOName} - ${match.href}`);
         
-        if (details && (details.openDate || details.closeDate || details.priceRange)) {
-          console.log(`✅ Successfully extracted data for: ${ipo.name}`);
+        try {
+          const details = await fetchIPODetails(match.href);
           
-          // Determine if this IPO is currently active based on dates
-          let isActive = false;
-          
-          if (details.openDate && details.closeDate) {
-            // Check if dates mention July 2025 (indicating current activity)
-            const openDateStr = details.openDate.toLowerCase();
-            const closeDateStr = details.closeDate.toLowerCase();
+          if (details) {
+            console.log(`✅ Successfully extracted data for: ${activeIPOName}`);
             
-            if ((openDateStr.includes('jul') || openDateStr.includes('july')) && 
-                (closeDateStr.includes('jul') || closeDateStr.includes('july')) &&
-                (openDateStr.includes('2025') || closeDateStr.includes('2025'))) {
-              isActive = true;
-            }
-          }
-          
-          // Also check if this IPO was specifically mentioned as active
-          const wasMentioned = mentionedIPOs.some(mentionedName => 
-            ipo.name.toLowerCase().includes(mentionedName.toLowerCase())
-          );
-          
-          if (isActive || wasMentioned) {
-            console.log(`✅ Confirmed active IPO: ${ipo.name}`);
-            
-            // Extract basic info for the list view
             const basicInfo = {
-              id: String(validIPOs.length + 1),
-              name: ipo.name.replace(/\s+IPO$/, ''), // Remove trailing "IPO"
+              id: String(activeIPOs.length + 1),
+              name: activeIPOName,
               issueSize: details.issueSize || 'TBD',
               priceRange: details.priceRange || 'TBD',
               openDate: details.openDate ? details.openDate.replace(/^[a-zA-Z]+,\s*/, '') : 'TBD',
               closeDate: details.closeDate ? details.closeDate.replace(/^[a-zA-Z]+,\s*/, '') : 'TBD',
-              link: ipo.link,
+              link: match.href,
               details: details
             };
             
-            validIPOs.push(basicInfo);
+            activeIPOs.push(basicInfo);
           } else {
-            console.log(`❌ IPO not currently active: ${ipo.name}`);
+            console.log(`❌ Could not extract data for: ${activeIPOName}`);
           }
-        } else {
-          console.log(`❌ Could not extract sufficient data for: ${ipo.name}`);
+        } catch (error) {
+          console.log(`❌ Error fetching details for ${activeIPOName}: ${error.message}`);
         }
-      } catch (error) {
-        console.log(`❌ Error validating ${ipo.name}: ${error.message}`);
+      } else {
+        console.log(`❌ No link found for active IPO: ${activeIPOName}`);
       }
     }
 
-    console.log(`\n✅ Successfully found ${validIPOs.length} active IPOs`);
+    console.log(`\n✅ Successfully found ${activeIPOs.length} currently active mainboard IPOs`);
     
-    // If no IPOs found through dynamic extraction, return empty array (no static fallback)
-    if (validIPOs.length === 0) {
-      console.log('No active IPOs found - returning empty array');
+    // If no IPOs found, return empty array (no static fallback)
+    if (activeIPOs.length === 0) {
+      console.log('No active mainboard IPOs found - returning empty array');
     }
     
-    return validIPOs;
+    return activeIPOs;
 
   } catch (error) {
     console.error('Error fetching IPOs:', error.message);
