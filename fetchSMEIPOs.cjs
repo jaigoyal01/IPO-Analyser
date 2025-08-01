@@ -75,9 +75,9 @@ async function fetchSMEIPOs() {
     console.log('Looking for active SME IPOs in page content...');
     
     // Extract active SME IPO names from the text
-    const activeSMEMatch = pageText.match(/current active sme IPOs are ([^.]+)/i);
-    const upcomingSMEMatch = pageText.match(/upcoming sme IPOs.*?are ([^.]+)/i);
-    const closingTodayMatch = pageText.match(/SME IPOs closing today are ([^.]+)/i);
+    const activeSMEMatch = pageText.match(/current active sme IPOs are ([^]+?)(?:\.\s[A-Z]|$)/i);
+    const upcomingSMEMatch = pageText.match(/upcoming sme IPOs.*?are ([^]+?)(?:\.\s[A-Z]|$)/i);
+    const closingTodayMatch = pageText.match(/SME IPOs closing today are ([^]+?)(?:\.\s[A-Z]|$)/i);
     
     let foundActiveIPOs = [];
     let foundUpcomingIPOs = [];
@@ -160,7 +160,13 @@ async function fetchSMEIPOs() {
           'Shree Refrigerations': 'https://www.chittorgarh.com/ipo/shree-refrigerations-ipo/2145/',
           'Patel Chem Specialities': 'https://www.chittorgarh.com/ipo/patel-chem-ipo/2153/',
           'Repono': 'https://www.chittorgarh.com/ipo/repono-limited-ipo/2232/',
-          'Umiya Mobile': 'https://www.chittorgarh.com/ipo/umiya-mobile-ipo/2273/'
+          'Umiya Mobile': 'https://www.chittorgarh.com/ipo/umiya-mobile-ipo/2273/',
+          'Cash Ur Drive Marketing': 'https://www.chittorgarh.com/ipo/cash-ur-drive-marketing-ipo/2136/',
+          'B.D.Industries': 'https://www.chittorgarh.com/ipo/b-d-industries-ipo/2162/',
+          'Renol Polychem': 'https://www.chittorgarh.com/ipo/renol-polychem-ipo/2200/',
+          'Mehul Colours': 'https://www.chittorgarh.com/ipo/mehul-colours-ipo/2302/',
+          'Takyon Networks': 'https://www.chittorgarh.com/ipo/takyon-networks-ipo/2361/',
+          'Flysbs Aviation': 'https://www.chittorgarh.com/ipo/flysbs-aviation-ipo/2418/'
         };
         
         console.log(`=== URL MAPPING DEBUG ===`);
