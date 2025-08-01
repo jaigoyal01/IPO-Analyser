@@ -150,25 +150,18 @@ const ConsolidatedIPOView = () => {
               <th rowSpan={2}>Open</th>
               <th rowSpan={2}>Close</th>
               <th rowSpan={2}>Lot</th>
-              <th colSpan={3}>Retail</th>
-              <th colSpan={3}>S-HNI</th>
-              <th colSpan={3}>B-HNI</th>
-              <th colSpan={3}>Allocation</th>
+              <th colSpan={2}>Retail</th>
+              <th colSpan={2}>S-HNI</th>
+              <th colSpan={2}>B-HNI</th>
               <th colSpan={3}>Max Allottees</th>
             </tr>
             <tr>
+              <th>Min Shr</th>
               <th>Min ₹</th>
               <th>Min Shr</th>
-              <th>Max ₹</th>
               <th>Min ₹</th>
               <th>Min Shr</th>
-              <th>Max ₹</th>
               <th>Min ₹</th>
-              <th>Min Shr</th>
-              <th>Max ₹</th>
-              <th>B-NII</th>
-              <th>S-NII</th>
-              <th>Retail</th>
               <th>Retail</th>
               <th>B-NII</th>
               <th>S-NII</th>
@@ -197,24 +190,16 @@ const ConsolidatedIPOView = () => {
                 <td className="lot-cell">{ipo.details?.lotSize || '-'}</td>
                 
                 {/* Retail */}
-                <td className="compact-amount">{ipo.details?.applications?.retailMin?.amount ? `₹${ipo.details.applications.retailMin.amount.toLocaleString('en-IN')}` : '-'}</td>
                 <td className="compact-shares">{ipo.details?.applications?.retailMin?.shares || '-'}</td>
-                <td className="compact-amount">{ipo.details?.applications?.retailMax?.amount ? `₹${ipo.details.applications.retailMax.amount.toLocaleString('en-IN')}` : '-'}</td>
+                <td className="compact-amount">{ipo.details?.applications?.retailMin?.amount ? `₹${ipo.details.applications.retailMin.amount.toLocaleString('en-IN')}` : '-'}</td>
                 
                 {/* S-HNI */}
-                <td className="compact-amount">{ipo.details?.applications?.sHniMin?.amount ? `₹${ipo.details.applications.sHniMin.amount.toLocaleString('en-IN')}` : '-'}</td>
                 <td className="compact-shares">{ipo.details?.applications?.sHniMin?.shares || '-'}</td>
-                <td className="compact-amount">{ipo.details?.applications?.sHniMax?.amount ? `₹${ipo.details.applications.sHniMax.amount.toLocaleString('en-IN')}` : '-'}</td>
+                <td className="compact-amount">{ipo.details?.applications?.sHniMin?.amount ? `₹${ipo.details.applications.sHniMin.amount.toLocaleString('en-IN')}` : '-'}</td>
                 
                 {/* B-HNI */}
-                <td className="compact-amount">{ipo.details?.applications?.bHniMin?.amount ? `₹${ipo.details.applications.bHniMin.amount.toLocaleString('en-IN')}` : '-'}</td>
                 <td className="compact-shares">{ipo.details?.applications?.bHniMin?.shares || '-'}</td>
-                <td>-</td>
-                
-                {/* Allocation */}
-                <td className="allocation-cell">{ipo.details?.allocation?.bNiiShares || '-'}</td>
-                <td className="allocation-cell">{ipo.details?.allocation?.sNiiShares || '-'}</td>
-                <td className="allocation-cell">{ipo.details?.allocation?.retailShares || '-'}</td>
+                <td className="compact-amount">{ipo.details?.applications?.bHniMin?.amount ? `₹${ipo.details.applications.bHniMin.amount.toLocaleString('en-IN')}` : '-'}</td>
                 
                 {/* Max Allottees */}
                 <td className="allottee-cell">{ipo.details?.allocation?.maxRetailAllottees || '-'}</td>
