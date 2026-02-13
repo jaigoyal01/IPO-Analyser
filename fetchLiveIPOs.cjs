@@ -363,26 +363,62 @@ async function fetchLiveIPOs() {
     // Load HTML into Cheerio for parsing
     const $ = cheerio.load(data);
     
-    // Based on current webpage content (August 1, 2025), these are the active mainboard IPOs
-    const currentActiveIPOs = [
-      'Sri Lotus Developers',
-      'M&B Engineering', 
-      'NSDL'
-    ];
-    
-    console.log('Looking for current active mainboard IPOs:', currentActiveIPOs);
-    
     const activeIPOs = [];
-    const allIPOLinks = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     
-    // Extract all IPO links from the page
-    $('a').each((index, element) => {
-      const $link = $(element);
-      const href = $link.attr('href');
-      const text = $link.text().trim();
+    // Helper function to parse date strings like "Tue, Feb 24, 2026" or "Feb 24, 2026"
+    function parseIpoDate(dateStr) {
+      if (!dateStr || dateStr === 'TBD' || dateStr.trim() === '') return null;
+      try {
+        // Remove day name if present (e.g., "Tue, ")
+        const cleanDate = dateStr.replace(/^[a-zA-Z]+,\s*/, '').trim();
+        const date = new Date(cleanDate);
+        if (!isNaN(date.getTime())) {
+          return date;
+        }
+      } catch (e) {}
+      return null;
+    }
+    
+    // Helper function to check if IPO is active (open date <= today <= close date)
+    // or upcoming (open date in the next 14 days)
+    function isActiveOrUpcoming(openDateStr, closeDateStr) {
+      const openDate = parseIpoDate(openDateStr);
+      const closeDate = parseIpoDate(closeDateStr);
       
-      // Filter for actual IPO detail page links
-      if (href && href.includes('/ipo/') && href.match(/\/ipo\/[^\/]+-ipo\/\d+\/?$/)) {
+      if (!openDate) return false;
+      
+      // Check if currently open
+      if (closeDate && openDate <= today && today <= closeDate) {
+        return { status: 'open', openDate, closeDate };
+      }
+      
+      // Check if upcoming (within next 14 days)
+      const twoWeeksLater = new Date(today);
+      twoWeeksLater.setDate(twoWeeksLater.getDate() + 14);
+      if (openDate > today && openDate <= twoWeeksLater) {
+        return { status: 'upcoming', openDate, closeDate };
+      }
+      
+      return false;
+    }
+    
+    console.log('Finding IPO links from page (table is dynamically rendered)...');
+    console.log('Today:', today.toDateString());
+    
+    // The website uses Next.js - table data is rendered client-side
+    // But IPO detail page links ARE available in the static HTML
+    // Strategy: Find all IPO links, fetch each detail page to get dates
+    const ipoLinks = [];
+    
+    // Find all IPO detail page links
+    $('a[href*="/ipo/"]').each((index, element) => {
+      const href = $(element).attr('href');
+      const text = $(element).text().trim();
+      
+      // Match IPO detail page URLs like /ipo/company-name-ipo/1234/
+      if (href && href.match(/\/ipo\/[^\/]+-ipo\/\d+\/?$/)) {
         // Skip generic/dashboard links
         if (text.toLowerCase().includes('dashboard') || 
             text.toLowerCase().includes('tracker') || 
@@ -391,61 +427,61 @@ async function fetchLiveIPOs() {
             text.toLowerCase().includes('grey market')) {
           return;
         }
-
-        // Construct full URL
+        
         let fullUrl = href;
         if (!fullUrl.startsWith('http')) {
           fullUrl = 'https://www.chittorgarh.com' + (fullUrl.startsWith('/') ? '' : '/') + fullUrl;
         }
-
-        allIPOLinks.push({
-          text: text,
-          href: fullUrl
-        });
+        
+        // Avoid duplicates
+        if (!ipoLinks.find(l => l.href === fullUrl)) {
+          ipoLinks.push({ name: text, href: fullUrl });
+        }
       }
     });
-
-    console.log(`Found ${allIPOLinks.length} IPO links in the page`);
-
-    // Match current active IPOs with the links found in the page
-    for (const activeIPOName of currentActiveIPOs) {
-      const match = allIPOLinks.find(link => 
-        link.text.toLowerCase().includes(activeIPOName.toLowerCase())
-      );
+    
+    console.log(`Found ${ipoLinks.length} unique IPO links`);
+    
+    // Fetch details for each IPO to get dates and check if active/upcoming
+    for (const ipo of ipoLinks) {
+      console.log(`\nChecking: ${ipo.name}`);
       
-      if (match) {
-        console.log(`✅ Found active IPO: ${activeIPOName} - ${match.href}`);
+      try {
+        const details = await fetchIPODetails(ipo.href);
         
-        try {
-          const details = await fetchIPODetails(match.href);
+        if (details && details.openDate) {
+          const status = isActiveOrUpcoming(details.openDate, details.closeDate);
           
-          if (details) {
-            console.log(`✅ Successfully extracted data for: ${activeIPOName}`);
+          if (status) {
+            console.log(`✅ ${status.status.toUpperCase()} IPO: ${ipo.name} (${details.openDate} - ${details.closeDate})`);
             
             const basicInfo = {
               id: String(activeIPOs.length + 1),
-              name: activeIPOName,
+              name: ipo.name.replace(' IPO', '').replace(' Ltd.', ''),
+              exchangePlatform: 'Mainboard',
               issueSize: details.issueSize || 'TBD',
               priceRange: details.priceRange || 'TBD',
               openDate: details.openDate ? details.openDate.replace(/^[a-zA-Z]+,\s*/, '') : 'TBD',
               closeDate: details.closeDate ? details.closeDate.replace(/^[a-zA-Z]+,\s*/, '') : 'TBD',
-              link: match.href,
+              lotSize: details.lotSize || 'TBD',
+              link: ipo.href,
+              status: status.status,
               details: details
             };
             
             activeIPOs.push(basicInfo);
           } else {
-            console.log(`❌ Could not extract data for: ${activeIPOName}`);
+            console.log(`⏭️ Not active/upcoming: ${ipo.name} (${details.openDate || 'no date'})`);
           }
-        } catch (error) {
-          console.log(`❌ Error fetching details for ${activeIPOName}: ${error.message}`);
+        } else {
+          console.log(`⚠️ No date info for: ${ipo.name}`);
         }
-      } else {
-        console.log(`❌ No link found for active IPO: ${activeIPOName}`);
+      } catch (error) {
+        console.log(`❌ Error fetching details for ${ipo.name}: ${error.message}`);
       }
     }
 
-    console.log(`\n✅ Successfully found ${activeIPOs.length} currently active mainboard IPOs`);
+    console.log(`\n✅ Successfully found ${activeIPOs.length} active/upcoming mainboard IPOs`);
     
     // If no IPOs found, return empty array (no static fallback)
     if (activeIPOs.length === 0) {
