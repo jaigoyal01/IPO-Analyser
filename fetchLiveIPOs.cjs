@@ -456,7 +456,7 @@ async function fetchLiveIPOs() {
             console.log(`✅ ${status.status.toUpperCase()} IPO: ${ipo.name} (${details.openDate} - ${details.closeDate})`);
             
             const basicInfo = {
-              id: String(activeIPOs.length + 1),
+              id: `main-${activeIPOs.length + 1}`,
               name: ipo.name.replace(' IPO', '').replace(' Ltd.', ''),
               exchangePlatform: 'Mainboard',
               issueSize: details.issueSize || 'TBD',

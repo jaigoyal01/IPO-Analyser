@@ -201,7 +201,7 @@ async function fetchSMEIPOs() {
             console.log(`✅ ${status.status.toUpperCase()} SME IPO: ${ipo.name} (${details.openDate} - ${details.closeDate})`);
             
             const basicInfo = {
-              id: String(smeIPOs.length + 1),
+              id: `sme-${smeIPOs.length + 1}`,
               name: ipo.name.replace(' IPO', '').replace(' Ltd.', ''),
               exchangePlatform: 'SME',
               issueSize: details.issueSize || 'TBD',
