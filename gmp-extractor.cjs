@@ -202,18 +202,21 @@ async function fetchGMPData(gmpUrl) {
       timeout: 15000 // Reduced timeout
     });
     
-    // Reduced wait time since we're blocking resources
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Wait for table to appear (up to 5 seconds)
+    try {
+      await page.waitForSelector('table', { timeout: 5000 });
+    } catch (e) {
+      console.log('Table selector wait timed out, continuing...');
+    }
+    
+    // Additional wait for table content to populate
+    await new Promise(resolve => setTimeout(resolve, 2000));
     
     // Extract GMP data from the page
     const gmpData = await page.evaluate(() => {
-      const tables = document.querySelectorAll('.table.table-bordered.table-striped.w-auto');
+      // Find the GMP table by content (more resilient to class changes)
+      const tables = document.querySelectorAll('table');
       
-      if (tables.length === 0) {
-        return { gmpValue: null, gmpStatus: 'Table not found' };
-      }
-      
-      // Look for the GMP trend table
       for (let table of tables) {
         const tableText = table.textContent;
         
@@ -227,20 +230,25 @@ async function fetchGMPData(gmpUrl) {
             continue;
           }
           
-          // Extract the Estimated Listing Price from the first row
+          // Extract GMP and Estimated Listing Price from the first row
           const cells = firstDataRow.querySelectorAll('td');
           let estimatedListingPrice = '';
+          let gmpRaw = '';
           
           cells.forEach(cell => {
             const dataTitle = cell.getAttribute('data-title') || '';
             if (dataTitle === 'Estimated Listing Price') {
               estimatedListingPrice = cell.textContent.trim();
             }
+            if (dataTitle === 'GMP') {
+              gmpRaw = cell.textContent.trim();
+            }
           });
           
-          if (estimatedListingPrice) {
+          if (estimatedListingPrice || gmpRaw) {
             return { 
-              gmpValue: estimatedListingPrice, 
+              gmpValue: estimatedListingPrice || gmpRaw, 
+              gmpRaw: gmpRaw,
               gmpStatus: 'Live' 
             };
           }

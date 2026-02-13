@@ -307,10 +307,15 @@ async function fetchSMEIPODetails(ipoUrl, companyName, headers) {
     
     // Extract GMP
     try {
-      const gmpData = await fetchGMPData(ipoUrl, companyName);
-      if (gmpData) {
-        details.gmp = gmpData.value;
-        details.gmpUrl = gmpData.url;
+      const gmpUrl = await getGMPUrl(ipoUrl);
+      if (gmpUrl) {
+        console.log(`Found GMP URL for ${companyName}: ${gmpUrl}`);
+        const gmpData = await fetchGMPData(gmpUrl);
+        if (gmpData && gmpData.gmpValue) {
+          details.gmp = gmpData.gmpValue;
+          details.gmpStatus = gmpData.gmpStatus;
+          details.gmpUrl = gmpData.gmpUrl;
+        }
       }
     } catch (e) {
       console.log(`⚠️ Could not fetch GMP for ${companyName}`);

@@ -157,7 +157,6 @@ const ConsolidatedIPOView = () => {
               <th colSpan={2}>Retail</th>
               <th colSpan={2}>S-HNI</th>
               <th colSpan={2}>B-HNI</th>
-              <th colSpan={3}>Max Allottees</th>
             </tr>
             <tr>
               <th>Min Shr</th>
@@ -166,9 +165,6 @@ const ConsolidatedIPOView = () => {
               <th>Min ₹</th>
               <th>Min Shr</th>
               <th>Min ₹</th>
-              <th>Retail</th>
-              <th>B-NII</th>
-              <th>S-NII</th>
             </tr>
           </thead>
           <tbody>
@@ -229,11 +225,6 @@ const ConsolidatedIPOView = () => {
                 {/* B-HNI */}
                 <td className="compact-shares">{ipo.details?.applications?.bHniMin?.shares || '-'}</td>
                 <td className="compact-amount">{ipo.details?.applications?.bHniMin?.amount ? `₹${ipo.details.applications.bHniMin.amount.toLocaleString('en-IN')}` : '-'}</td>
-                
-                {/* Max Allottees */}
-                <td className="allottee-cell">{ipo.details?.allocation?.maxRetailAllottees || '-'}</td>
-                <td className="allottee-cell">{ipo.details?.allocation?.maxBNiiAllottees || '-'}</td>
-                <td className="allottee-cell">{ipo.details?.allocation?.maxSNiiAllottees || '-'}</td>
               </tr>
             ))}
           </tbody>
