@@ -268,6 +268,41 @@
   white-space: nowrap;
 }
 
+.closing-tag {
+  display: block;
+  margin-top: 3px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #c62828;
+}
+
+.ipo-table tbody tr.closing-today td {
+  background-color: #fff5f5;
+}
+
+.ipo-table tbody tr.closing-today td:first-child {
+  box-shadow: inset 3px 0 0 #e53935;
+}
+
+/* GMP colour coding */
+.gmp-value {
+  font-weight: 600;
+}
+
+.gmp-up .gmp-value {
+  color: #1b7f3b;
+}
+
+.gmp-down .gmp-value {
+  color: #c62828;
+}
+
+.gmp-flat .gmp-value {
+  color: #616161;
+}
+
 /* Platform column optimization */
 .platform-badge {
   text-align: center;

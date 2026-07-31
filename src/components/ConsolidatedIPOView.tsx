@@ -51,11 +51,28 @@ interface LiveIPO {
   details: IPODetails;
 }
 
-// Handles both "August 7, 2026" and "Fri, Jul 31, 2026"; unparseable dates sort last
-const parseIPODate = (dateString: string | null): number => {
-  if (!dateString) return Number.MAX_SAFE_INTEGER;
-  const timestamp = Date.parse(dateString.replace(/^\s*\w{3,9},\s*/, ''));
-  return isNaN(timestamp) ? Number.MAX_SAFE_INTEGER : timestamp;
+// Handles "August 7, 2026", "Fri, Jul 31, 2026" and year-less "July 29"
+const toDate = (dateString: string | null): Date | null => {
+  if (!dateString) return null;
+  const cleaned = dateString.replace(/^\s*\w{3,9},\s*/, '').trim();
+  for (const candidate of [cleaned, `${cleaned} ${new Date().getFullYear()}`]) {
+    const timestamp = Date.parse(candidate);
+    if (!isNaN(timestamp)) return new Date(timestamp);
+  }
+  return null;
+};
+
+// Unparseable dates sort last
+const parseIPODate = (dateString: string | null): number =>
+  toDate(dateString)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+
+const startOfDay = (date: Date) =>
+  new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+
+// GMP arrives as "₹575 (-2.54%)" — the percentage drives the colour coding
+const parseGmpPercent = (gmp?: string): number | null => {
+  const match = gmp?.match(/\(\s*(-?[\d.]+)\s*%\s*\)/);
+  return match ? parseFloat(match[1]) : null;
 };
 
 const ConsolidatedIPOView = () => {
@@ -91,29 +108,9 @@ const ConsolidatedIPOView = () => {
 
   // Helper function to format dates more compactly
   const formatCompactDate = (dateString: string) => {
-    if (!dateString) return '-';
-    
-    // Try to extract and format dates
-    const datePatterns = [
-      /(\w{3}),?\s+(\w{3,9})\s+(\d{1,2}),?\s+(\d{4})/i, // "Fri, Jul 25, 2025"
-      /(\w{3,9})\s+(\d{1,2}),?\s+(\d{4})/i, // "July 25, 2025"
-    ];
-    
-    for (const pattern of datePatterns) {
-      const match = dateString.match(pattern);
-      if (match) {
-        if (match.length === 5) {
-          // Has day of week
-          return `${match[3]}/${match[2].slice(0,3)}`;
-        } else if (match.length === 4) {
-          // No day of week
-          return `${match[2]}/${match[1].slice(0,3)}`;
-        }
-      }
-    }
-    
-    // If no pattern matches, return first few words
-    return dateString.split(' ').slice(0, 2).join(' ');
+    const date = toDate(dateString);
+    if (!date) return dateString ? dateString.split(' ').slice(0, 2).join(' ') : '-';
+    return `${date.getDate()} ${date.toLocaleString('en-US', { month: 'short' })}`;
   };
 
   // Helper function to extract only the Cr amount from issue size
@@ -176,8 +173,16 @@ const ConsolidatedIPOView = () => {
             </tr>
           </thead>
           <tbody>
-            {ipos.map((ipo) => (
-              <tr key={ipo.id}>
+            {ipos.map((ipo) => {
+              const closeDate = toDate(ipo.closeDate);
+              const closingToday =
+                closeDate !== null && startOfDay(closeDate) === startOfDay(new Date());
+              const gmpPercent = parseGmpPercent(ipo.details?.gmp);
+              const gmpTone =
+                gmpPercent === null ? '' : gmpPercent > 0 ? 'gmp-up' : gmpPercent < 0 ? 'gmp-down' : 'gmp-flat';
+
+              return (
+              <tr key={ipo.id} className={closingToday ? 'closing-today' : ''}>
                 <td className="ipo-name">
                   <div>{ipo.name}</div>
                   <small>
@@ -194,32 +199,24 @@ const ConsolidatedIPOView = () => {
                 <td className="compact-amount">{formatIssueSize(ipo.issueSize)}</td>
                 <td className="compact-amount">{ipo.priceRange}</td>
                 <td className="date-cell">{formatCompactDate(ipo.openDate)}</td>
-                <td className="date-cell">{formatCompactDate(ipo.closeDate)}</td>
+                <td className="date-cell">
+                  {formatCompactDate(ipo.closeDate)}
+                  {closingToday && <span className="closing-tag">Last day</span>}
+                </td>
                 <td className="lot-cell">{ipo.details?.lotSize || '-'}</td>
-                <td className="gmp-cell">
-                  {ipo.details?.gmp && ipo.details.gmp !== 'TBD' ? (
-                    <div>
-                      <div>{ipo.details.gmp}</div>
-                      {ipo.details.gmpUrl && (
-                        <small>
-                          <a href={ipo.details.gmpUrl} target="_blank" rel="noopener noreferrer">
-                            View GMP
-                          </a>
-                        </small>
-                      )}
+                <td className={`gmp-cell ${gmpTone}`}>
+                  <div>
+                    <div className="gmp-value">
+                      {ipo.details?.gmp && ipo.details.gmp !== 'TBD' ? ipo.details.gmp : '-'}
                     </div>
-                  ) : (
-                    <div>
-                      <div>-</div>
-                      {ipo.details?.gmpUrl && (
-                        <small>
-                          <a href={ipo.details.gmpUrl} target="_blank" rel="noopener noreferrer">
-                            View GMP
-                          </a>
-                        </small>
-                      )}
-                    </div>
-                  )}
+                    {ipo.details?.gmpUrl && (
+                      <small>
+                        <a href={ipo.details.gmpUrl} target="_blank" rel="noopener noreferrer">
+                          View GMP
+                        </a>
+                      </small>
+                    )}
+                  </div>
                 </td>
                 
                 {/* Retail */}
@@ -234,7 +231,8 @@ const ConsolidatedIPOView = () => {
                 <td className="compact-shares">{ipo.details?.applications?.bHniMin?.shares || '-'}</td>
                 <td className="compact-amount">{ipo.details?.applications?.bHniMin?.amount ? `₹${ipo.details.applications.bHniMin.amount.toLocaleString('en-IN')}` : '-'}</td>
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
