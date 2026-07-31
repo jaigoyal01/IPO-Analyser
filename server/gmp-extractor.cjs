@@ -221,7 +221,7 @@ async function fetchGMPData(gmpUrl) {
         const tableText = table.textContent;
         
         // Check if this is the GMP trend table
-        if (tableText.includes('GMP Date') && tableText.includes('Estimated Listing Price')) {
+        if (tableText.includes('GMP Date') && tableText.includes('Listing Price')) {
           
           // Get the first row of data (latest GMP)
           const firstDataRow = table.querySelector('tbody tr:first-child');
@@ -237,7 +237,8 @@ async function fetchGMPData(gmpUrl) {
           
           cells.forEach(cell => {
             const dataTitle = cell.getAttribute('data-title') || '';
-            if (dataTitle === 'Estimated Listing Price') {
+            // Site labels this column "Estimated Listing Price" or "Est. Listing Price"
+            if (dataTitle.includes('Listing Price')) {
               estimatedListingPrice = cell.textContent.trim();
             }
             if (dataTitle === 'GMP') {

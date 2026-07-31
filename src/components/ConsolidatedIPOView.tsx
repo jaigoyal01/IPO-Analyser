@@ -51,6 +51,13 @@ interface LiveIPO {
   details: IPODetails;
 }
 
+// Handles both "August 7, 2026" and "Fri, Jul 31, 2026"; unparseable dates sort last
+const parseIPODate = (dateString: string | null): number => {
+  if (!dateString) return Number.MAX_SAFE_INTEGER;
+  const timestamp = Date.parse(dateString.replace(/^\s*\w{3,9},\s*/, ''));
+  return isNaN(timestamp) ? Number.MAX_SAFE_INTEGER : timestamp;
+};
+
 const ConsolidatedIPOView = () => {
   const [ipos, setIpos] = useState<LiveIPO[]>([]);
   const [loading, setLoading] = useState(false);
@@ -70,6 +77,7 @@ const ConsolidatedIPOView = () => {
       .then(data => {
         // Combine mainboard and SME IPOs
         const allIPOs = [...(data.mainboard || []), ...(data.sme || [])];
+        allIPOs.sort((a, b) => parseIPODate(a.closeDate) - parseIPODate(b.closeDate));
         setIpos(allIPOs);
       })
       .catch(err => {
@@ -87,8 +95,8 @@ const ConsolidatedIPOView = () => {
     
     // Try to extract and format dates
     const datePatterns = [
-      /(\w{3}),?\s+(\w{3})\s+(\d{1,2}),?\s+(\d{4})/i, // "Fri, Jul 25, 2025"
-      /(\w{3})\s+(\d{1,2}),?\s+(\d{4})/i, // "July 25, 2025"
+      /(\w{3}),?\s+(\w{3,9})\s+(\d{1,2}),?\s+(\d{4})/i, // "Fri, Jul 25, 2025"
+      /(\w{3,9})\s+(\d{1,2}),?\s+(\d{4})/i, // "July 25, 2025"
     ];
     
     for (const pattern of datePatterns) {
